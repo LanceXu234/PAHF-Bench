@@ -1,17 +1,19 @@
-# PAHF -> VitaBench 28-Task Setup
+# PAHF -> VitaBench Native 28-Task Setup
 
 ## Current Status
 
-`PAHF` is **not** a native VitaBench runner.
+This repository now contains a native VitaBench bridge for PAHF.
 
-Its released codebase is built around:
+The bridge is designed to keep VitaBench's official evaluation path intact:
 
-- embodied household tasks
-- shopping multiple-choice recommendation tasks
+- VitaBench personalization workflow
+- VitaBench evaluator
+- VitaBench metrics
+- VitaBench raw results structure
 
-So running `python run_agent.py --agent shopping` is **not** equivalent to running the VitaBench 28-task personalization benchmark.
+and replace only the memory backend with a PAHF-style memory module.
 
-What has been prepared here is the clean baseline package and evaluation surface needed for a rigorous port:
+The prepared surfaces are:
 
 - isolated Python environment: `baseline/PAHF/.venv`
 - dedicated API config file: `baseline/PAHF/.env.pahf`
@@ -20,6 +22,8 @@ What has been prepared here is the clean baseline package and evaluation surface
 - extracted local 28-task slice target: `baseline/PAHF/data/vitabench/dynamic_delivery_28.tasks.json`
 - comparison contract: `baseline/PAHF/json/metric_contract.json`
 - preflight check script: `baseline/PAHF/scripts/preflight_pahf.py`
+- native VitaBench runner: `baseline/PAHF/scripts/run_vitabench_pahf.py`
+- one-command bridge launcher: `baseline/PAHF/scripts/run_vitabench_pahf_28.sh`
 
 ## Dependency Split
 
@@ -35,8 +39,9 @@ There are now two runtime layers:
 Important:
 
 - `torch` is **not** required just to call an API
-- `torch` is required only when you want PAHF's local embedding-based memory stack
-- a CPU-only server can still run PAHF native baseline and can also run full memory mode, but full memory mode will be slower
+- `torch` is required when you want PAHF's local embedding-based memory stack
+- the VitaBench bridge uses PAHF memory, so it also requires `requirements.memory.txt`
+- a CPU-only server can still run the VitaBench bridge, but the first run will be slower
 
 ## Where To Fill The API
 
@@ -57,6 +62,7 @@ Optional:
 - `PAHF_HUMAN_MODEL`
 - `PAHF_OPENAI_TIMEOUT`
 - `PAHF_OPENAI_MAX_RETRIES`
+- `PAHF_VITA_*` bridge variables if you want to override defaults
 
 ## Clean Environment
 
@@ -76,6 +82,12 @@ If you later need the full PAHF memory stack:
 powershell -ExecutionPolicy Bypass -File baseline\PAHF\scripts\setup_pahf_env.ps1 -WithMemoryDeps
 ```
 
+For the Linux cloud path, use:
+
+```bash
+bash scripts/bootstrap_vitabench_pahf.sh
+```
+
 ## Preflight
 
 Run:
@@ -91,33 +103,42 @@ This checks:
 - optional memory-package availability
 - 28-task manifest presence
 
-## Prepare The Fixed 28-Task Slice
+## Fixed 28-Task Slice
 
-This copies the official VitaBench 28-task subset into the PAHF workspace without modifying the official benchmark files:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File baseline\PAHF\scripts\prepare_vitabench_subset.ps1
-```
-
-Outputs:
+The fixed task slice is already stored locally at:
 
 - `baseline/PAHF/data/vitabench/dynamic_delivery_28.tasks.json`
-- `baseline/PAHF/data/vitabench/dynamic_delivery_28.summary.json`
 
-## Native PAHF Smoke Run
+So the 28-task run does **not** require downloading the full personalization dataset just to launch this benchmark.
 
-This does **not** run VitaBench. It only verifies the PAHF package itself:
+## Native VitaBench Smoke Run
 
-```powershell
-powershell -ExecutionPolicy Bypass -File baseline\PAHF\scripts\run_pahf_native.ps1 -Agent shopping -NoMemory
+Minimal smoke run:
+
+```bash
+PAHF_VITA_LIMIT_TASKS=1 PAHF_VITA_NUM_TRIALS=1 PAHF_VITA_MAX_STEPS=20 bash scripts/run_vitabench_pahf_28.sh
 ```
 
-## Evaluation Chain Meaning
+Full 28-task run:
 
-For the 28-task benchmark, the scientifically clean interpretation is:
+```bash
+bash scripts/run_vitabench_pahf_28.sh
+```
 
-1. Keep PAHF isolated as its own baseline package.
-2. Freeze the target 28-task subset with the manifest file.
-3. Port or bridge the PAHF method into the VitaBench runner only after the package-level environment and API path are verified.
+## Output Files
 
-This avoids the incorrect shortcut of pretending PAHF's native shopping benchmark is already a VitaBench result.
+Each run writes a timestamped directory under:
+
+- `baseline/PAHF/runs/vitabench_pahf/`
+
+with:
+
+- `official_results.json`
+- `official_metrics.json`
+- `subtask_records.jsonl`
+- `subtask_records.csv`
+- `skill_tag_metrics.json`
+- `run_manifest.json`
+- `SUMMARY.md`
+
+This keeps both the official benchmark metrics and the fine-grained subtask-level traces for later analysis.
