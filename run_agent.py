@@ -30,6 +30,11 @@ def run_embodied_agent(
     mem_style="sql",
     learning_iter=3,
     model="gpt-4o",
+    human_model=None,
+    api_key=None,
+    base_url=None,
+    timeout=None,
+    max_retries=None,
 ):
     """Run the embodied agent for robot tasks.
     
@@ -60,7 +65,14 @@ def run_embodied_agent(
     prompts = {"original": prompt_dict, "evolved": prompt_evolved_dict}
 
     # Create LLM client and agent
-    llm_client = LLMClient(model=model)
+    llm_client = LLMClient(
+        model=model,
+        human_model=human_model,
+        api_key=api_key,
+        base_url=base_url,
+        timeout=timeout,
+        max_retries=max_retries,
+    )
     agent = EmbodiedAgent(llm_client)
 
     # Run full study
@@ -86,6 +98,11 @@ def run_shopping_agent(
     learning_iter=3,
     model="gpt-4o",
     feedback_style="detailed",
+    human_model=None,
+    api_key=None,
+    base_url=None,
+    timeout=None,
+    max_retries=None,
 ):
     """Run the shopping agent for e-commerce tasks.
     
@@ -141,7 +158,14 @@ def run_shopping_agent(
     }
 
     # Create LLM client and agent
-    llm_client = LLMClient(model=model)
+    llm_client = LLMClient(
+        model=model,
+        human_model=human_model,
+        api_key=api_key,
+        base_url=base_url,
+        timeout=timeout,
+        max_retries=max_retries,
+    )
     agent = ShoppingAgent(llm_client)
 
     # Run full study
@@ -223,6 +247,41 @@ Examples:
     )
 
     parser.add_argument(
+        "--human_model",
+        type=str,
+        default=None,
+        help="Optional separate model for the human simulator. Defaults to --model.",
+    )
+
+    parser.add_argument(
+        "--api_key",
+        type=str,
+        default=None,
+        help="Optional API key override. Defaults to PAHF_OPENAI_API_KEY / OPENAI_API_KEY.",
+    )
+
+    parser.add_argument(
+        "--base_url",
+        type=str,
+        default=None,
+        help="Optional OpenAI-compatible base URL override. Defaults to PAHF_OPENAI_BASE_URL / OPENAI_BASE_URL.",
+    )
+
+    parser.add_argument(
+        "--timeout",
+        type=float,
+        default=None,
+        help="Optional request timeout override in seconds.",
+    )
+
+    parser.add_argument(
+        "--max_retries",
+        type=int,
+        default=None,
+        help="Optional OpenAI client retry override.",
+    )
+
+    parser.add_argument(
         "--shopping_feedback_style",
         type=str,
         default="minimal",
@@ -239,6 +298,11 @@ Examples:
             mem_style=args.mem_style,
             learning_iter=args.learning_iter,
             model=args.model,
+            human_model=args.human_model,
+            api_key=args.api_key,
+            base_url=args.base_url,
+            timeout=args.timeout,
+            max_retries=args.max_retries,
         )
     elif args.agent == "shopping":
         run_shopping_agent(
@@ -247,6 +311,11 @@ Examples:
             learning_iter=args.learning_iter,
             model=args.model,
             feedback_style=args.shopping_feedback_style,
+            human_model=args.human_model,
+            api_key=args.api_key,
+            base_url=args.base_url,
+            timeout=args.timeout,
+            max_retries=args.max_retries,
         )
     else:
         parser.print_help()

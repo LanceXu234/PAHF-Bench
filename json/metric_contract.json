@@ -1,0 +1,43 @@
+{
+  "baseline_id": "pahf_vitabench_28_bridge",
+  "baseline_kind": "verify_local_existing",
+  "path": "E:\\nlp-lab\\MemPro\\baseline\\PAHF",
+  "task": "VitaBench-2.0 personalization",
+  "dataset": "VitaBench-2.0",
+  "split": "dynamic_delivery_28",
+  "source": {
+    "method_name": "PAHF",
+    "local_repo": "E:\\nlp-lab\\MemPro\\baseline\\PAHF",
+    "native_entrypoint": "baseline/PAHF/run_agent.py",
+    "native_supported_agents": [
+      "embodied",
+      "shopping"
+    ]
+  },
+  "evaluation_path": {
+    "source_meta": "benchmark/vitabench-2.0/data/vita/domains/personalization/tasks_subset_dynamic_delivery_28.meta.json",
+    "source_tasks": "benchmark/vitabench-2.0/data/vita/domains/personalization/tasks.json",
+    "local_manifest": "baseline/PAHF/configs/vitabench_28task_manifest.json",
+    "local_prepared_subset": "baseline/PAHF/data/vitabench/dynamic_delivery_28.tasks.json",
+    "preflight_script": "baseline/PAHF/scripts/preflight_pahf.py"
+  },
+  "required_metric_ids": [
+    "task_success_rate",
+    "subtask_success_rate",
+    "pass1",
+    "pass3"
+  ],
+  "metric_directions": {
+    "task_success_rate": "higher_is_better",
+    "subtask_success_rate": "higher_is_better",
+    "pass1": "higher_is_better",
+    "pass3": "higher_is_better"
+  },
+  "known_deviations": [
+    "PAHF native released code is not a native VitaBench runner.",
+    "A scientifically valid 28-task result requires porting or bridging PAHF into the VitaBench execution loop.",
+    "Native PAHF shopping or embodied runs must not be reported as VitaBench 28-task scores."
+  ],
+  "verification_status": "trusted_with_caveats",
+  "summary": "PAHF has been isolated locally with explicit API wiring, frozen 28-task subset, and a clean preflight path. Native package verification is ready; direct VitaBench comparability still requires a bridge."
+}

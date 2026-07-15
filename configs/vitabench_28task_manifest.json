@@ -1,0 +1,41 @@
+{
+  "benchmark": "VitaBench-2.0 personalization",
+  "task_subset_name": "dynamic_delivery_28",
+  "source_meta": "E:\\nlp-lab\\MemPro\\benchmark\\vitabench-2.0\\data\\vita\\domains\\personalization\\tasks_subset_dynamic_delivery_28.meta.json",
+  "task_ids": [
+    "B471882",
+    "B865629",
+    "D975700",
+    "F360923",
+    "J365414",
+    "J528498",
+    "J681677",
+    "J741979",
+    "M793481",
+    "N453690",
+    "O309411",
+    "P581430",
+    "P722245",
+    "P978297",
+    "Q089190",
+    "Q420944",
+    "Q563889",
+    "R203124",
+    "U000828",
+    "U157368",
+    "U778202",
+    "V746582",
+    "W974351",
+    "X193757",
+    "Y208341",
+    "Y481422",
+    "Z544664",
+    "Z687865"
+  ],
+  "notes": [
+    "PAHF is not natively a VitaBench runner.",
+    "This manifest fixes the comparison task set before any method port or bridge run.",
+    "Use this file as the source of truth for the 28-task evaluation subset."
+  ],
+  "output_root": "E:\\nlp-lab\\MemPro\\baseline\\PAHF\\runs\\vitabench_28task"
+}

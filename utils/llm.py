@@ -15,7 +15,13 @@ class LLMClient:
     """LLM client using OpenAI API for GPT models."""
 
     def __init__(
-        self, model: str = "gpt-4o", human_model: str = None, api_key: str = None
+        self,
+        model: str = "gpt-4o",
+        human_model: str = None,
+        api_key: str = None,
+        base_url: str = None,
+        timeout: float = None,
+        max_retries: int = None,
     ):
         """Initialize the LLM client.
 
@@ -23,19 +29,44 @@ class LLMClient:
             model: Model name for agent (e.g., "gpt-4o", "gpt-4o-mini", "gpt-4-turbo")
             human_model: Model name for human simulation (if None, uses same as model)
             api_key: OpenAI API key (if None, reads from OPENAI_API_KEY environment variable)
+            base_url: OpenAI-compatible base URL
+            timeout: Request timeout in seconds
+            max_retries: Maximum OpenAI client retries
         """
-        self.model = model
-        self.human_model = human_model if human_model is not None else model
+        env_model = os.getenv("PAHF_AGENT_MODEL") or os.getenv("OPENAI_MODEL")
+        env_human_model = os.getenv("PAHF_HUMAN_MODEL")
+        self.model = env_model or model
+        self.human_model = human_model or env_human_model or self.model
 
         # Initialize OpenAI client
-        api_key = api_key or os.getenv("OPENAI_API_KEY")
+        api_key = (
+            api_key
+            or os.getenv("PAHF_OPENAI_API_KEY")
+            or os.getenv("OPENAI_API_KEY")
+        )
         if not api_key:
             raise ValueError(
                 "OpenAI API key not found. Please provide it via api_key parameter "
-                "or set OPENAI_API_KEY environment variable."
+                "or set PAHF_OPENAI_API_KEY / OPENAI_API_KEY environment variable."
             )
 
-        self.client = OpenAI(api_key=api_key)
+        base_url = (
+            base_url
+            or os.getenv("PAHF_OPENAI_BASE_URL")
+            or os.getenv("OPENAI_BASE_URL")
+        )
+        timeout = timeout or float(os.getenv("PAHF_OPENAI_TIMEOUT", "180"))
+        max_retries = max_retries or int(os.getenv("PAHF_OPENAI_MAX_RETRIES", "5"))
+
+        client_kwargs = {
+            "api_key": api_key,
+            "timeout": timeout,
+            "max_retries": max_retries,
+        }
+        if base_url:
+            client_kwargs["base_url"] = base_url
+
+        self.client = OpenAI(**client_kwargs)
 
     def build_msgs(self, messages: List[Dict[str, str]]) -> List[Dict[str, str]]:
         """Build messages in OpenAI format.

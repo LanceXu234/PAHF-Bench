@@ -11,10 +11,20 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
-import faiss
 import numpy as np
-import torch
-from transformers import AutoModel, AutoTokenizer
+
+try:
+    import faiss  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    faiss = None
+
+try:
+    import torch
+    from transformers import AutoModel, AutoTokenizer
+except ImportError:  # pragma: no cover - optional dependency
+    torch = None
+    AutoModel = None
+    AutoTokenizer = None
 
 
 class DragonPlusEmbedding:
@@ -38,6 +48,11 @@ class DragonPlusEmbedding:
             context_encoder: HuggingFace model name for context/document encoding
             device: Device to run model on (default: auto-detect cuda/cpu)
         """
+        if torch is None or AutoModel is None or AutoTokenizer is None:
+            raise ImportError(
+                "PAHF memory backends require torch and transformers. "
+                "Install baseline/PAHF/requirements.memory.txt to enable memory."
+            )
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         
         # Load query encoder
@@ -436,6 +451,11 @@ class FAISSMemoryBank(MemoryBank):
         """
         if person_id is None:
             raise ValueError("person_id is required for FAISSMemoryBank")
+        if faiss is None:
+            raise ImportError(
+                "FAISS memory backend requires faiss-cpu or faiss-gpu. "
+                "Install baseline/PAHF/requirements.memory.txt to enable FAISS."
+            )
 
         self.embeddings = embedding_model or DragonPlusEmbedding()
         self.use_dot_product = use_dot_product
@@ -578,7 +598,7 @@ class FAISSMemoryBank(MemoryBank):
         result = []
         for doc_id, index in self.id_to_index.items():
             if self.person_ids[index] == self.person_id:
-            result.append((doc_id, self.documents[index]))
+                result.append((doc_id, self.documents[index]))
         return result
 
     def add(self, text: str) -> None:
@@ -637,17 +657,17 @@ class FAISSMemoryBank(MemoryBank):
         results = []
         k = min(len(self.documents), max(top_k * 10, 50))
         while k <= len(self.documents):
-        distances, indices = self.index.search(query_emb, k)
+            distances, indices = self.index.search(query_emb, k)
 
-        # Filter results to only include this person's memories
-        results = []
+            # Filter results to only include this person's memories
+            results = []
             for distance, idx in zip(distances[0], indices[0]):
                 if idx != -1 and idx < len(self.person_ids):
-                if self.person_ids[idx] == self.person_id:
+                    if self.person_ids[idx] == self.person_id:
                         score = distance if self.use_dot_product else -distance
-                    results.append((score, self.documents[idx]))
-                    if len(results) >= top_k:
-                        break
+                        results.append((score, self.documents[idx]))
+                        if len(results) >= top_k:
+                            break
 
             if len(results) >= top_k or k == len(self.documents):
                 break
