@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
@@ -159,6 +160,17 @@ def _extract_json_block(text: str) -> Optional[Any]:
     return None
 
 
+def _env_flag(name: str, default: Optional[bool] = None) -> Optional[bool]:
+    raw = str(os.environ.get(name, "")).strip().lower()
+    if not raw:
+        return default
+    if raw in {"1", "true", "yes", "on"}:
+        return True
+    if raw in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
 class PAHFMemory(BaseMemory):
     """PAHF-style preference memory bridged into VitaBench's native memory interface."""
 
@@ -189,6 +201,20 @@ class PAHFMemory(BaseMemory):
             similarity_threshold=similarity_threshold,
             **kwargs,
         )
+        env_bank_type = str(os.environ.get("PAHF_VITA_MEMORY_BACKEND", "")).strip().lower()
+        if env_bank_type:
+            bank_type = env_bank_type
+
+        disable_extraction = _env_flag("PAHF_VITA_DISABLE_LLM_EXTRACTION")
+        if disable_extraction is not None:
+            enable_llm_extraction = not disable_extraction
+
+        disable_questions = _env_flag("PAHF_VITA_DISABLE_LLM_QUESTIONS")
+        if disable_questions is None:
+            disable_questions = _env_flag("PAHF_VITA_DISABLE_LLM_QUESTION")
+        if disable_questions is not None:
+            enable_llm_questions = not disable_questions
+
         self.user_id = user_id or "user"
         self.bank_type = str(bank_type or "sql").lower()
         self.enable_llm_extraction = bool(enable_llm_extraction)

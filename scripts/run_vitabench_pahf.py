@@ -189,6 +189,10 @@ def main() -> int:
     _load_dotenv(REPO_ROOT / ".env.pahf")
     args = build_parser().parse_args()
 
+    os.environ["PAHF_VITA_MEMORY_BACKEND"] = args.memory_bank_type
+    os.environ["PAHF_VITA_DISABLE_LLM_EXTRACTION"] = "1" if args.disable_llm_extraction else "0"
+    os.environ["PAHF_VITA_DISABLE_LLM_QUESTIONS"] = "1" if args.disable_llm_questions else "0"
+
     vitabench_root = Path(args.vitabench_root).resolve()
     task_file = Path(args.task_file).resolve()
     run_root = Path(args.run_root).resolve()
@@ -232,12 +236,6 @@ def main() -> int:
     }
     _save_json(run_dir / "run_manifest.json", run_manifest)
 
-    memory_llm_kwargs = {
-        "bank_type": args.memory_bank_type,
-        "enable_llm_extraction": not args.disable_llm_extraction,
-        "enable_llm_questions": not args.disable_llm_questions,
-    }
-
     results = run_tasks(
         domain="personalization",
         tasks=tasks,
@@ -262,8 +260,7 @@ def main() -> int:
         language=args.language,
         memory_class="pahf_bench.vitabench_bridge.PAHFMemory",
         enable_outcome_reward=args.enable_outcome_reward,
-        memory_type="rewrite",
-        **memory_llm_kwargs,
+        memory_type=None,
     )
 
     metrics = compute_metrics(results)
